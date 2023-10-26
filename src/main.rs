@@ -1,27 +1,22 @@
-use rodio::source::{SineWave, Source};
-use rodio::{OutputStream, Sink};
-use std::thread;
-use std::time::Duration;
+mod fft;
+mod utils;
+use plotly::{Plot, Scatter};
 
-fn tone(freq: f32, dur: f32) {
-    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    let sink = Sink::try_new(&stream_handle).unwrap();
-
-    // Add a dummy source of the sake of the example.
-    let source = SineWave::new(freq)
-        .take_duration(Duration::from_secs_f32(dur))
-        .amplify(0.20);
-    sink.append(source);
-
-    // The sound plays in a separate thread. This call will block the current thread until the sink
-    // has finished playing all its queued sounds.
-    //
-    sink.sleep_until_end();
-    println!("{},{}", dur, freq)
-}
 fn main() {
-    thread::spawn(|| {
-        tone(100.0, 2.0);
-    });
-    thread::sleep(Duration::from_secs_f32(3.0));
+    // let mut reader = hound::WavReader::open("data/k2.wav").unwrap();
+    let v = utils::buff_to_vec("data/s1.wav".to_string());
+    let samples: Vec<f32> = utils::convert_vecs(v);
+    // 2048 is a good starting point with 44100 kHz
+    let spec = fft::fft(samples);
+
+    for (fr, fr_val) in spec.to_mel_map().iter() {
+        println!("{} => {}", fr, fr_val)
+    }
+
+    let mut plot = Plot::new();
+    let v1: Vec<f32> = spec.to_mel_map().iter().map(|e| *e.0 as f32).collect();
+    let v2: Vec<f32> = spec.to_mel_map().iter().map(|e| *e.1).collect();
+    let trace = Scatter::new(v1.clone(), v2);
+    plot.add_trace(trace);
+    plot.show();
 }
