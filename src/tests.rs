@@ -17,6 +17,11 @@ impl<T> Point<T> {
         &self.x
     }
 }
+pub fn vector_range(range: i32) {
+    let v: Vec<i32> = (0..range).collect();
+    println!("{:?}", v);
+}
+
 fn main() {
     let number_list = vec![1, 4, 5, 7, 4, 2, 6];
     let result = largest(&number_list);
@@ -25,4 +30,6 @@ fn main() {
     let i = Point { x: 4.0, y: 2.0 };
     println!("{i:#?}");
     println!("{}", i.x);
+
+    vector_range(10);
 }
