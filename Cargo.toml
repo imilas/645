@@ -16,3 +16,4 @@ cpal = "0.15.2"
 anyhow = "1.0"
 ringbuf = "0.3"
 clap = { version = "4.0", features = ["derive"] }
+ringbuffer = "0.15.0"
