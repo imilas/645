@@ -1,37 +1,34 @@
-use plotly::{Contour, HeatMap, Layout, Plot};
-mod fft;
-mod utils;
-
-pub fn windows(v: &Vec<f32>, overlap: i32) -> std::slice::Windows<'_, f32> {
-    // returns an iterator of vector windows
-    let iter = v.windows(overlap as usize);
-    return iter;
-}
-
-pub fn slices(v: &Vec<f32>, w: usize, step: usize) -> Vec<Vec<f32>> {
-    let mut slices = Vec::new();
-    let mut i: usize = 0;
-    while i + w < v.len() {
-        // println!("{:?}", &samples[i..i + w]);
-        let slice = v[i..i + w].to_vec();
-        let slice_fft = fft::fft(slice, w);
-        let slice_mel = fft::spec_to_mels(slice_fft).1;
-        slices.push(slice_mel);
-        i += step;
-    }
-    return slices;
-}
-
 fn main() {
-    let v = utils::buff_to_vec("data/kitchen.wav".to_string());
-    let samples: Vec<f32> = utils::convert_vecs(v);
-    let w: usize = usize::pow(2, 11);
-    let step: usize = 100;
-    let mut s = slices(&samples, w, step);
-    println!("{:?},{}", s.len(), s[0].len());
-    s = utils::transpose(s);
-    let trace = HeatMap::new_z(s);
-    let mut plot = Plot::new();
-    plot.add_trace(trace);
-    plot.show();
+    run();
+}
+use winit::{
+    event::*,
+    event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
+};
+
+pub fn run() {
+    env_logger::init();
+    let event_loop = EventLoop::new();
+    let window = WindowBuilder::new().build(&event_loop).unwrap();
+
+    event_loop.run(move |event, _, control_flow| match event {
+        Event::WindowEvent {
+            ref event,
+            window_id,
+        } if window_id == window.id() => match event {
+            WindowEvent::CloseRequested
+            | WindowEvent::KeyboardInput {
+                input:
+                    KeyboardInput {
+                        state: ElementState::Pressed,
+                        virtual_keycode: Some(VirtualKeyCode::Escape),
+                        ..
+                    },
+                ..
+            } => *control_flow = ControlFlow::Exit,
+            _ => {}
+        },
+        _ => {}
+    });
 }

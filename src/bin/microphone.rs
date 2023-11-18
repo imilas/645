@@ -1,11 +1,8 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::Data;
+use main::fft;
 use ringbuffer::{AllocRingBuffer, RingBuffer};
 use std::sync::mpsc;
-
-use std::convert::From;
-use std::iter::Sum;
-use std::ops::Div;
 
 fn main() -> anyhow::Result<()> {
     let host = cpal::default_host();
@@ -14,7 +11,7 @@ fn main() -> anyhow::Result<()> {
         .expect("no output device available");
     let (tx, rx) = mpsc::channel();
 
-    let mut buffer: AllocRingBuffer<f32> = AllocRingBuffer::with_capacity(20000);
+    let mut buffer: AllocRingBuffer<f32> = AllocRingBuffer::with_capacity(10000);
 
     let config: cpal::StreamConfig = input_device.default_input_config().unwrap().into();
     let input_data_fn = move |data: &[f32], _: &cpal::InputCallbackInfo| {
@@ -31,15 +28,21 @@ fn main() -> anyhow::Result<()> {
     let input_stream = input_device.build_input_stream(&config, input_data_fn, err_fn, None)?;
     input_stream.play()?;
 
+    let fft_len = 2048;
+    for _ in 0..fft_len {
+        buffer.push(0.0);
+    }
+
     let mut i = 0;
     for received in rx {
         i += 1;
         if i % 3000 == 0 {
-            let avg = average(&buffer.to_vec());
-            print!("Got: {},{i},{avg}", received);
+            print!("Got: {},{i}", received);
             print!("\r");
+            buffer.push(received);
+            let buff_fft = fft::fft(buffer.to_vec(), fft_len);
+            let buff_mel = fft::spec_to_mels(buff_fft);
         }
-        buffer.push(received.abs());
     }
 
     drop(input_stream);
@@ -47,13 +50,4 @@ fn main() -> anyhow::Result<()> {
 }
 fn err_fn(err: cpal::StreamError) {
     eprintln!("an error occurred on stream: {}", err);
-}
-
-fn average<'v, T>(v: &'v [T]) -> T
-where
-    T: Div<Output = T>,
-    T: From<u16>,
-    T: Sum<&'v T>,
-{
-    v.iter().sum::<T>() / From::from(v.len() as u16)
 }
