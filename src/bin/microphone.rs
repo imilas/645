@@ -1,5 +1,4 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::Data;
 use main::fft;
 use ringbuffer::{AllocRingBuffer, RingBuffer};
 use std::sync::mpsc;
@@ -16,15 +15,11 @@ fn main() -> anyhow::Result<()> {
     let config: cpal::StreamConfig = input_device.default_input_config().unwrap().into();
     let input_data_fn = move |data: &[f32], _: &cpal::InputCallbackInfo| {
         for &sample in data {
-            // eprintln!("{} ", sample);
             // buffer.push(sample);
             tx.send(sample).unwrap();
         }
     };
-    println!(
-        "Attempting to build both streams with f32 samples and `{:?}`.",
-        config
-    );
+
     let input_stream = input_device.build_input_stream(&config, input_data_fn, err_fn, None)?;
     input_stream.play()?;
 

@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 spectrum-analyzer = "1.5.0"
-rand = "0.8.5"
 hound = "3.5.1"
 plotly = "0.8.4"
 cpal = "0.15.2"
@@ -15,7 +14,11 @@ anyhow = "1.0"
 ringbuf = "0.3"
 clap = { version = "4.0", features = ["derive"] }
 ringbuffer = "0.15.0"
-winit = "0.28"
+winit = "0.28.3"
 env_logger = "0.10"
 log = "0.4"
-wgpu = "0.18.0"
+cfg-if = "1"
+wgpu = "0.18"
+pollster = "0.3"
+rand = "0.8.5"
+

@@ -18,6 +18,7 @@ where
 {
     v.into_iter().map(Into::into).collect()
 }
+
 pub fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
     assert!(!v.is_empty());
     let len = v[0].len();
