@@ -1,11 +1,9 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use main::fft;
-use ringbuf::ring_buffer::RbRef;
-use ringbuf::{consumer, Consumer, HeapRb, SharedRb};
-use ringbuffer::{AllocRingBuffer, RingBuffer};
-use std::fmt::Pointer;
-use std::sync::mpsc;
-use std::{iter, sync::mpsc::Receiver};
+
+use ringbuf::HeapRb;
+
+use std::iter;
 
 const FFT_LEN: usize = 2048;
 use winit::{
@@ -153,7 +151,7 @@ impl State {
                 .sum::<f32>()
                 / num_bins as f32;
             let high: f32 = buff_mel[num_bins / 5..num_bins].iter().sum::<f32>() / num_bins as f32;
-            println!("{},{},{}", low, med, high);
+            // println!("{},{},{}", low, med, high);
             self.clear_color.r = low as f64;
             self.clear_color.g = med as f64;
             self.clear_color.b = high as f64;
@@ -199,7 +197,7 @@ impl State {
 }
 
 fn main() {
-    pollster::block_on(run());
+    let _ = pollster::block_on(run());
 }
 
 async fn run() -> anyhow::Result<()> {
@@ -212,7 +210,7 @@ async fn run() -> anyhow::Result<()> {
 
     // The buffer to share samples
     let ring = HeapRb::<f32>::new(fft_len * 2);
-    let (mut producer, mut consumer) = ring.split();
+    let (mut producer, consumer) = ring.split();
 
     // Fill the samples with 0.0 equal to the length of the delay.
     for _ in 0..fft_len {
@@ -225,7 +223,7 @@ async fn run() -> anyhow::Result<()> {
     let input_data_fn = move |data: &[f32], _: &cpal::InputCallbackInfo| {
         for &sample in data {
             if producer.push(sample).is_err() {
-                println!("heap filled, before fft applied");
+                // println!("heap filled, before fft applied");
             }
         }
     };
