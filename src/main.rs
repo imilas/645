@@ -7,6 +7,7 @@ use std::fmt::Pointer;
 use std::sync::mpsc;
 use std::{iter, sync::mpsc::Receiver};
 
+const FFT_LEN: usize = 2048;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -40,7 +41,6 @@ impl State {
         });
 
         // # Safety
-        //
         // The surface needs to live as long as the window that created it.
         // State owns the window so this should be safe.
         let surface = unsafe { instance.create_surface(&window) }.unwrap();
@@ -73,7 +73,7 @@ impl State {
             .unwrap();
 
         let surface_caps = surface.get_capabilities(&adapter);
-        // Shader code in this tutorial assumes an Srgb surface texture. Using a different
+        //assumes an Srgb surface texture. Using a different
         // one will result all the colors comming out darker. If you want to support non
         // Srgb surfaces, you'll need to account for that when drawing to the frame.
         let surface_format = surface_caps
@@ -138,7 +138,28 @@ impl State {
     }
 
     fn update(&mut self) {
-        print!("{:?}", self.consumer.pop());
+        let v: Vec<f32> = self.consumer.pop_iter().collect();
+        if v.len() > FFT_LEN {
+            // let amp = f64::from(v.iter().map(|&x| x.abs()).sum::<f32>() / v.len() as f32);
+            let buff_fft = fft::fft(&v, FFT_LEN);
+            // number of fft bins is around half the fft_length
+            // also, the fft::fft function can limit the range of requencies
+            let (_, buff_mel) = fft::spec_to_mels(&buff_fft);
+            let num_bins = buff_mel.len();
+            let low: f32 =
+                buff_mel[0..num_bins / 10 as usize].iter().sum::<f32>() / num_bins as f32;
+            let med: f32 = buff_mel[num_bins / 10..num_bins / 5 as usize]
+                .iter()
+                .sum::<f32>()
+                / num_bins as f32;
+            let high: f32 = buff_mel[num_bins / 5..num_bins].iter().sum::<f32>() / num_bins as f32;
+            println!("{},{},{}", low, med, high);
+            self.clear_color.r = low as f64;
+            self.clear_color.g = med as f64;
+            self.clear_color.b = high as f64;
+        } else {
+            // eprintln!("not enough samples to fft");
+        }
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -187,10 +208,10 @@ async fn run() -> anyhow::Result<()> {
         .default_input_device()
         .expect("no output device available");
 
-    let fft_len = 10;
+    let fft_len = 2048;
 
     // The buffer to share samples
-    let ring = HeapRb::<f32>::new(fft_len);
+    let ring = HeapRb::<f32>::new(fft_len * 2);
     let (mut producer, mut consumer) = ring.split();
 
     // Fill the samples with 0.0 equal to the length of the delay.
@@ -204,7 +225,7 @@ async fn run() -> anyhow::Result<()> {
     let input_data_fn = move |data: &[f32], _: &cpal::InputCallbackInfo| {
         for &sample in data {
             if producer.push(sample).is_err() {
-                eprintln!("heap filled, before fft applied");
+                println!("heap filled, before fft applied");
             }
         }
     };

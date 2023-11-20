@@ -5,7 +5,7 @@ use spectrum_analyzer::windows::hann_window;
 use spectrum_analyzer::FrequencySpectrum;
 use spectrum_analyzer::{samples_fft_to_spectrum, FrequencyLimit};
 
-pub fn fft(samples: Vec<f32>, size: usize) -> spectrum_analyzer::FrequencySpectrum {
+pub fn fft(samples: &Vec<f32>, size: usize) -> spectrum_analyzer::FrequencySpectrum {
     let hann_window = hann_window(&samples[0..size]);
     // calc spectrum
     let spectrum_hann_window = samples_fft_to_spectrum(
@@ -15,6 +15,7 @@ pub fn fft(samples: Vec<f32>, size: usize) -> spectrum_analyzer::FrequencySpectr
         44100,
         // optional frequency limit: e.g. only interested in frequencies 50 <= f <= 150?
         FrequencyLimit::Range(30.0, 10000.0),
+        // FrequencyLimit::All,
         // optional scale
         Some(&divide_by_N_sqrt),
     )
@@ -23,14 +24,14 @@ pub fn fft(samples: Vec<f32>, size: usize) -> spectrum_analyzer::FrequencySpectr
 }
 pub fn plot_fft_window(samples: Vec<f32>, size: usize) {
     // uses plot.ly to plot mel frequencies of a vector
-    let spec = fft(samples, size);
-    let (v1, v2) = spec_to_mels(spec);
+    let spec = fft(&samples, size);
+    let (v1, v2) = spec_to_mels(&spec);
     let mut plot = Plot::new();
     let trace = Scatter::new(v1, v2);
     plot.add_trace(trace);
     plot.show();
 }
-pub fn spec_to_mels(spec: FrequencySpectrum) -> (Vec<f32>, Vec<f32>) {
+pub fn spec_to_mels(spec: &FrequencySpectrum) -> (Vec<f32>, Vec<f32>) {
     // takes in a spectrogram and return 2 vectors (mels,amplitudes)
     let v1: Vec<f32> = spec.to_mel_map().iter().map(|e| *e.0 as f32).collect();
     let v2: Vec<f32> = spec.to_mel_map().iter().map(|e| *e.1).collect();

@@ -15,8 +15,8 @@ pub fn slices(v: &Vec<f32>, w: usize, step: usize) -> Vec<Vec<f32>> {
     while i + w < v.len() {
         // println!("{:?}", &samples[i..i + w]);
         let slice = v[i..i + w].to_vec();
-        let slice_fft = fft::fft(slice, w);
-        let slice_mel = fft::spec_to_mels(slice_fft).1;
+        let slice_fft = fft::fft(&slice, w);
+        let slice_mel = fft::spec_to_mels(&slice_fft).1;
         slices.push(slice_mel);
         i += step;
     }
