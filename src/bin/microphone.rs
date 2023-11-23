@@ -35,8 +35,8 @@ fn main() -> anyhow::Result<()> {
             print!("Got: {},{i}", received);
             print!("\r");
             buffer.push(received);
-            let buff_fft = fft::fft(buffer.to_vec(), fft_len);
-            let buff_mel = fft::spec_to_mels(buff_fft);
+            let buff_fft = fft::fft(&buffer.to_vec(), fft_len);
+            let buff_mel = fft::spec_to_mels(&buff_fft);
         }
     }
 

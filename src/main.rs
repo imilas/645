@@ -146,11 +146,11 @@ impl State {
             let num_bins = buff_mel.len();
             let low: f32 =
                 buff_mel[0..num_bins / 10 as usize].iter().sum::<f32>() / num_bins as f32;
-            let med: f32 = buff_mel[num_bins / 10..num_bins / 5 as usize]
+            let med: f32 = buff_mel[num_bins / 10..num_bins / 4 as usize]
                 .iter()
                 .sum::<f32>()
                 / num_bins as f32;
-            let high: f32 = buff_mel[num_bins / 5..num_bins].iter().sum::<f32>() / num_bins as f32;
+            let high: f32 = buff_mel[num_bins / 4..num_bins].iter().sum::<f32>() / num_bins as f32;
             // println!("{},{},{}", low, med, high);
             self.clear_color.r = low as f64;
             self.clear_color.g = med as f64;
